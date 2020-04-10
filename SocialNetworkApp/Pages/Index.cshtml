@@ -1,0 +1,41 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+    <div class="text-center">
+        <h1 class="display-4">Welcome to the simplest ever social network</h1>
+        <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+
+        <div class="card">
+            <div class="card-body">
+                <form class="form-inline" enctype="multipart/form-data" method="post">
+                    <div class="form-group">
+                        <label asp-for="FormFile"></label>
+                        <input class="form-control-file" asp-for="FormFile" type="file">
+                        <span asp-validation-for="FormFile"></span>
+                    </div>
+                    <div class="form-group">
+                        <button asp-page-handler="Upload" type="submit" value="Upload" class="btn btn-primary">Upload</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <br />
+        <button class="btn btn-dark" onclick="window.location.reload();">Refresh</button>
+        <br />
+        <div class="card">
+            @foreach (var (postedOn, dayViewModel) in Model.HappinessPerDayProjectionViewModel)
+            {
+                <div class="card-body">
+                    <b>On date: @postedOn.ToShortDateString()</b>
+                    <br />
+                    People on pictures: @dayViewModel.PeopleCount
+                    <br />
+                    Happiness Average: @($"{dayViewModel.HappinessAverage:0.##}")
+                </div>
+                <hr />
+            }
+        </div>
+    </div>
