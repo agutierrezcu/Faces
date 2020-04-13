@@ -10,6 +10,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using SocialFacesApp.Models;
 using SocialFacesApp.Options;
+using SocialShared.Logging;
 
 namespace SocialFacesApp.Functions
 {
@@ -34,24 +35,21 @@ namespace SocialFacesApp.Functions
                 ConnectionStringSetting = Constants.CosmosDbConnectionName)]
             IAsyncCollector<JObject> facesCollection,
             string name,
-            ILogger log)
+            ILogger logger)
         {
-            var newLine = Environment.NewLine;
-            log.LogInformation(@$"C# Blob trigger function Processed blob{newLine} Name:{name} {newLine} Size: {picture.Length} Bytes");
-
+            using var scopedLogger = new ScopedLogger(logger, "C# Blob trigger function analyzing the new image and store results");
             try
             {
-                var analysisResult = await GetAnalysisAsync(picture);
-                var newFaceDocument = CreateNewFaceDocument(analysisResult);
-                await facesCollection.AddAsync(newFaceDocument);
+                var analysisResult = await GetAnalysisAsync(picture, logger);
+                await AddNewFaceDocumentAsync(analysisResult, facesCollection, logger);
             }
             catch (Exception ex)
             {
-                log.LogError(null, ex);
+                logger.LogError(null, ex);
             }
         }
 
-        private async Task<string> GetAnalysisAsync(Stream picture)
+        private async Task<string> GetAnalysisAsync(Stream picture, ILogger logger)
         {
             var client = new FaceClient(new ApiKeyServiceClientCredentials(_facesApiOptions.Key))
             {
@@ -71,7 +69,8 @@ namespace SocialFacesApp.Functions
             return readAsStringAsync;
         }
 
-        private JObject CreateNewFaceDocument(string analysisResult)
+        private async Task AddNewFaceDocumentAsync(string analysisResult, IAsyncCollector<JObject> facesCollection,
+            ILogger logger)
         {
             var postedOn = GetRandomPostedOnDate();
             var newFaceDocument = JObject.FromObject(
@@ -80,12 +79,12 @@ namespace SocialFacesApp.Functions
                     PostedOn = postedOn,
                     Descriptors = JArray.Parse(analysisResult)
                 });
-            return newFaceDocument;
+            await facesCollection.AddAsync(newFaceDocument);
         }
 
         private DateTime GetRandomPostedOnDate()
         {
-            const int daysOffset = 2;
+            const int daysOffset = 5;
             var postedOn = DateTime.UtcNow.Date.AddDays(_intervalDaysRandom.Next(-daysOffset, daysOffset));
             return postedOn;
         }

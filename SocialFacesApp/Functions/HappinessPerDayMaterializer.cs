@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using SocialFacesApp.Models;
+using SocialShared.Logging;
 
 namespace SocialFacesApp.Functions
 {
@@ -40,8 +41,9 @@ namespace SocialFacesApp.Functions
                 collectionName: Constants.CosmosDbHappinessPerDayCollectionName,
                 ConnectionStringSetting = Constants.CosmosDbConnectionName)]
             DocumentClient documentClient,
-            ILogger log)
+            ILogger logger)
         {
+            using var scopedLogger = new ScopedLogger(logger, "C# CosmosDB trigger function processed changes feed and updating happiness per day projection.");
             try
             {
                 var newMaterializedResults = MaterializeHappinessPerDayProjection(changedFaces);
@@ -64,7 +66,7 @@ namespace SocialFacesApp.Functions
             }
             catch (Exception ex)
             {
-                log.LogError(null, ex);
+                logger.LogError(null, ex);
             }
         }
 

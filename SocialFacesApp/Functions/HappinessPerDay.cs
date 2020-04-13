@@ -5,6 +5,7 @@ using Microsoft.Azure.Documents;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using SocialShared.Logging;
 
 namespace SocialFacesApp.Functions
 {
@@ -22,8 +23,9 @@ namespace SocialFacesApp.Functions
                 ConnectionStringSetting = Constants.CosmosDbConnectionName,
                 SqlQuery = AllHappinessPerDayQuery)] 
             IEnumerable<Document> happinessPerDayCollection,
-            ILogger log)
+            ILogger logger)
         {
+            using var scopedLogger = new ScopedLogger(logger, "C# Http trigger function fetching all documents from happiness per day projection");
             return new OkObjectResult(happinessPerDayCollection);
         }
     }

@@ -31,7 +31,7 @@ namespace SocialNetworkApp.Pages
 
         public HappinessPerDayProjectionViewModel HappinessPerDayProjectionViewModel { get; set; } = new HappinessPerDayProjectionViewModel();
 
-        public IndexModel(IPictureStorageClient pictureStorageClient, 
+        public IndexModel(IPictureStorageClient pictureStorageClient,
             IOptions<FunctionApiOptions> functionApiOptions, ILogger<IndexModel> logger)
         {
             _pictureStorageClient = pictureStorageClient;
@@ -41,23 +41,17 @@ namespace SocialNetworkApp.Pages
 
         public async Task OnGet()
         {
-            using var httpClient = new HttpClient();
-
-            var baseUri = new Uri(_functionApiOptions.BaseUri);
-            var relativeUri = new Uri("/api/happinessPerDay", UriKind.Relative);
-
-            var responseMessage = await httpClient.GetAsync(new Uri(baseUri, relativeUri));
-            var responseContent = await responseMessage.Content.ReadAsStringAsync();
-            
-            var happinessPerDayViewModels = 
-                JsonConvert.DeserializeObject<IEnumerable<HappinessPerDayViewModel>>(responseContent);
-
-            happinessPerDayViewModels.ToList().ForEach(
-                vm => HappinessPerDayProjectionViewModel.Add(vm.PostedOn, vm));
+            await FetchHappinessPerDayViewModel();
         }
 
-        public async Task<IActionResult> OnPostUploadAsync(IFormFile formFile)
+        public async Task<IActionResult> OnPostUploadAsync()
         {
+            if (!ModelState.IsValid)
+            {
+                await FetchHappinessPerDayViewModel();
+                return RedirectToPage();
+            }
+
             try
             {
                 await using var stream = FormFile.OpenReadStream();
@@ -68,6 +62,23 @@ namespace SocialNetworkApp.Pages
                 _logger.LogError(null, ex);
             }
             return RedirectToPage();
+        }
+
+        private async Task FetchHappinessPerDayViewModel()
+        {
+            using var httpClient = new HttpClient();
+
+            var baseUri = new Uri(_functionApiOptions.BaseUri);
+            var relativeUri = new Uri("/api/happinessPerDay", UriKind.Relative);
+
+            var responseMessage = await httpClient.GetAsync(new Uri(baseUri, relativeUri));
+            var responseContent = await responseMessage.Content.ReadAsStringAsync();
+
+            var happinessPerDayViewModels =
+                JsonConvert.DeserializeObject<IEnumerable<HappinessPerDayViewModel>>(responseContent);
+
+            happinessPerDayViewModels.ToList().ForEach(
+                vm => HappinessPerDayProjectionViewModel.Add(vm.PostedOn, vm));
         }
     }
 }
