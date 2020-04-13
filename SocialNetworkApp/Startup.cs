@@ -30,7 +30,7 @@ namespace SocialNetworkApp
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<PicturesStorageOptions>(Configuration.GetSection("PicturesStorage"));
-            services.Configure<FunctionApiOptions>(Configuration.GetSection("FunctionApi"));
+            services.Configure<ApiOptions>(Configuration.GetSection("Api"));
             
             services.AddSingleton<IPictureStorageClient, PictureStorageClient>();
 

@@ -22,7 +22,7 @@ namespace SocialNetworkApp.Pages
 
         private readonly IPictureStorageClient _pictureStorageClient;
 
-        private readonly FunctionApiOptions _functionApiOptions;
+        private readonly ApiOptions _apiOptions;
 
         [BindProperty]
         [Required]
@@ -32,10 +32,10 @@ namespace SocialNetworkApp.Pages
         public HappinessPerDayProjectionViewModel HappinessPerDayProjectionViewModel { get; set; } = new HappinessPerDayProjectionViewModel();
 
         public IndexModel(IPictureStorageClient pictureStorageClient,
-            IOptions<FunctionApiOptions> functionApiOptions, ILogger<IndexModel> logger)
+            IOptions<ApiOptions> functionApiOptions, ILogger<IndexModel> logger)
         {
             _pictureStorageClient = pictureStorageClient;
-            _functionApiOptions = functionApiOptions.Value;
+            _apiOptions = functionApiOptions.Value;
             _logger = logger;
         }
 
@@ -68,7 +68,7 @@ namespace SocialNetworkApp.Pages
         {
             using var httpClient = new HttpClient();
 
-            var baseUri = new Uri(_functionApiOptions.BaseUri);
+            var baseUri = new Uri(_apiOptions.BaseUri);
             var relativeUri = new Uri("/api/happinessPerDay", UriKind.Relative);
 
             var responseMessage = await httpClient.GetAsync(new Uri(baseUri, relativeUri));

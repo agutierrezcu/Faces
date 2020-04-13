@@ -14,7 +14,7 @@ using SocialShared.Logging;
 
 namespace SocialFacesApp.Functions
 {
-    public static class HappinessPerDayMaterializer
+    public static class HappinessPerDayNormalizer
     {
         private static readonly Uri HappinessPerDayUri =
             UriFactory.CreateDocumentCollectionUri("SocialNetwork", "happinessPerDay");
@@ -27,7 +27,7 @@ namespace SocialFacesApp.Functions
             }
         };
 
-        [FunctionName("HappinessPerDayMaterializer")]
+        [FunctionName("HappinessPerDayNormalizer")]
         public static async Task Run(
             [CosmosDBTrigger(
                 databaseName: Constants.CosmosDbDatabaseName,
@@ -46,20 +46,20 @@ namespace SocialFacesApp.Functions
             using var scopedLogger = new ScopedLogger(logger, "C# CosmosDB trigger function processed changes feed and updating happiness per day projection.");
             try
             {
-                var newMaterializedResults = MaterializeHappinessPerDayProjection(changedFaces);
+                var normalizedResults = NormalizeHappinessPerDayProjection(changedFaces);
 
-                foreach (var newMaterializedResult in newMaterializedResults)
+                foreach (var normalizedResult in normalizedResults)
                 {
                     var happinessPerDayProjection = await GetHappinessPerDayProjectionByDay(documentClient,
-                        newMaterializedResult.PostedOn);
+                        normalizedResult.PostedOn);
 
                     if (happinessPerDayProjection == null)
                     {
-                        await documentClient.CreateDocumentAsync(HappinessPerDayUri, newMaterializedResult, CreateDocumentOptions);
+                        await documentClient.CreateDocumentAsync(HappinessPerDayUri, normalizedResult, CreateDocumentOptions);
                     }
                     else
                     {
-                        happinessPerDayProjection.UpdateHappinessInfo(newMaterializedResult);
+                        happinessPerDayProjection.UpdateHappinessInfo(normalizedResult);
                         await documentClient.UpsertDocumentAsync(HappinessPerDayUri, happinessPerDayProjection, CreateDocumentOptions);
                     }
                 }
@@ -70,14 +70,14 @@ namespace SocialFacesApp.Functions
             }
         }
 
-        private static IEnumerable<HappinessPerDayProjection> MaterializeHappinessPerDayProjection(IReadOnlyCollection<Document> changedFaces)
+        private static IEnumerable<HappinessPerDayProjection> NormalizeHappinessPerDayProjection(IReadOnlyCollection<Document> changedFaces)
         {
             if (changedFaces.Count == 0 )
             {
                 return Enumerable.Empty<HappinessPerDayProjection>();
             }
 
-            var newMaterializedResults = changedFaces
+            var normalizedResults = changedFaces
                 .Select(d => JsonConvert.DeserializeObject<FacesAnalysisResult>(d.ToString()))
                 .GroupBy(p => p.PostedOn)
                     .Select(g =>
@@ -91,7 +91,7 @@ namespace SocialFacesApp.Functions
                         };
                 })
                 .ToList();
-            return newMaterializedResults;
+            return normalizedResults;
         }
 
         private static async Task<HappinessPerDayProjection> GetHappinessPerDayProjectionByDay(IDocumentClient documentClient, DateTime postedOn)
