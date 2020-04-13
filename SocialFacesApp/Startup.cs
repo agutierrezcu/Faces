@@ -46,7 +46,7 @@ namespace SocialFacesApp
 
             var builder = new ConfigurationBuilder()
                 .SetBasePath(executionContext.AppDirectory)
-                .AddJsonFile("local.settings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("local.settings.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables();
 
             var aspCoreEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");

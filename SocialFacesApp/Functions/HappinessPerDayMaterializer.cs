@@ -36,9 +36,9 @@ namespace SocialFacesApp.Functions
                 CreateLeaseCollectionIfNotExists = true)]
             IReadOnlyList<Document> changedFaces,
             [CosmosDB(
-                databaseName: "SocialNetwork",
-                collectionName: "happinessPerDay",
-                ConnectionStringSetting = "CosmosDB")]
+                databaseName: Constants.CosmosDbDatabaseName,
+                collectionName: Constants.CosmosDbHappinessPerDayCollectionName,
+                ConnectionStringSetting = Constants.CosmosDbConnectionName)]
             DocumentClient documentClient,
             ILogger log)
         {

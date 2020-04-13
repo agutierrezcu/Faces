@@ -4,7 +4,7 @@ namespace SocialFacesApp
     {
         public const string CosmosDbDatabaseName = "SocialNetwork";
         
-        public const string CosmosDbConnectionName = "CosmosDB";
+        public const string CosmosDbConnectionName = "AzureCosmosDB";
 
         public const string CosmosDbFacesCollectionName = "faces";
 

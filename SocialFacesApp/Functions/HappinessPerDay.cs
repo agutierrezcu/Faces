@@ -1,14 +1,10 @@
 using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using SocialFacesApp.Models;
 
 namespace SocialFacesApp.Functions
 {
@@ -17,7 +13,7 @@ namespace SocialFacesApp.Functions
         private const string AllHappinessPerDayQuery =
             "SELECT c.id as postedOn, c.peopleCount, c.happinessAmount, c.happinessAverage FROM c ORDER BY c.id DESC";
 
-        [FunctionName("HappinessPerDay")]
+        [FunctionName("happinessPerDay")]
         public static IActionResult Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
             [CosmosDB(

@@ -44,7 +44,7 @@ namespace SocialNetworkApp.Pages
             using var httpClient = new HttpClient();
 
             var baseUri = new Uri(_functionApiOptions.BaseUri);
-            var relativeUri = new Uri("/api/HappinessPerDay", UriKind.Relative);
+            var relativeUri = new Uri("/api/happinessPerDay", UriKind.Relative);
 
             var responseMessage = await httpClient.GetAsync(new Uri(baseUri, relativeUri));
             var responseContent = await responseMessage.Content.ReadAsStringAsync();
