@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.Azure.Functions.Extensions.DependencyInjection;
-using Microsoft.Azure.KeyVault;
-using Microsoft.Azure.Services.AppAuthentication;
-using Microsoft.Azure.WebJobs.Host.Bindings;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.AzureKeyVault;
+﻿using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using SocialFacesApp;
+using SocialFacesApp.Extensions;
 using SocialFacesApp.Options;
+using SocialFacesApp.Services;
+using SocialFacesApp.Services.Contracts;
 
 [assembly: FunctionsStartup(typeof(Startup))]
 
@@ -25,55 +19,17 @@ namespace SocialFacesApp
 
         public void ConfigureServices(IServiceCollection services)
         {
-            var providers = new List<IConfigurationProvider>();
-
-            var configServiceDescriptors = 
-                services.Where(descriptor => descriptor.ServiceType == typeof(IConfiguration))
-                .ToList();
-            foreach (var descriptor in configServiceDescriptors)
-            {
-                if (!(descriptor.ImplementationInstance is IConfigurationRoot existingConfiguration))
-                {
-                    continue;
-                }
-
-                providers.AddRange(existingConfiguration.Providers);
-                services.Remove(descriptor);
-            }
-
-            var serviceProvider = services.BuildServiceProvider();
-            var executionContext = serviceProvider.GetService<IOptions<ExecutionContextOptions>>().Value;
-
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(executionContext.AppDirectory)
-                .AddJsonFile("local.settings.json", optional: true, reloadOnChange: true)
-                .AddEnvironmentVariables();
-
-            var aspCoreEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-
-            if (string.Equals(aspCoreEnvironment, "Development", 
-                    StringComparison.InvariantCultureIgnoreCase))
-            {
-                builder.AddUserSecrets(GetType().Assembly, optional: true);
-            }
-            else
-            {
-                var azureServiceTokenProvider = new AzureServiceTokenProvider();
-                var authenticationCallback = new KeyVaultClient.AuthenticationCallback(
-                    azureServiceTokenProvider.KeyVaultTokenCallback);
-                var keyVaultClient = new KeyVaultClient(authenticationCallback);
-                var defaultKeyVaultSecretManager = new DefaultKeyVaultSecretManager();
-                builder.AddAzureKeyVault("https://socialnetworkapp-0-kv.vault.azure.net/", 
-                    keyVaultClient, defaultKeyVaultSecretManager);
-            }
-
-            var config = builder.Build();
-            providers.AddRange(config.Providers);
-
-            var configurationRoot = new ConfigurationRoot(providers);
-            services.AddSingleton<IConfiguration>(configurationRoot);
+            var configurationRoot = services.AddConfiguration(GetType().Assembly);
 
             services.Configure<FacesApiOptions>(configurationRoot.GetSection("FacesApi"));
+
+            //services.AddSingleton<IProvidePostedOnDate, TodayPostedOnProvider>();
+            services.AddSingleton<IProvidePostedOnDate, RandomPostedOnProvider>();
+            
+            services.AddSingleton<IAnalyzePicture, PictureAnalyzer>();
+            
+            services.AddSingleton<INormalizeHappinessPerDay, HappinessPerDayNormalizer>();
+            services.AddSingleton<IManageHappinessPerDayProjection, HappinessPerDayProjectionManager>();
         }
     }
 }
