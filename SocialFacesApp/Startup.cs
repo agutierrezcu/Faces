@@ -3,6 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using SocialFacesApp;
 using SocialFacesApp.Extensions;
 using SocialFacesApp.Options;
+using SocialFacesApp.Persistence;
+using SocialFacesApp.Persistence.Contracts;
 using SocialFacesApp.Services;
 using SocialFacesApp.Services.Contracts;
 
@@ -19,17 +21,22 @@ namespace SocialFacesApp
 
         public void ConfigureServices(IServiceCollection services)
         {
-            var configurationRoot = services.AddConfiguration(GetType().Assembly);
+            var configuration = services.AddConfiguration(GetType().Assembly);
 
-            services.Configure<FacesApiOptions>(configurationRoot.GetSection("FacesApi"));
+            services.AddCosmosDocumentClient(configuration[Constants.CosmosDbConnectionName]);
+
+            var facesApiSection = configuration.GetSection("FacesApi");
+            //services.Configure<FacesApiOptions>(facesApiSection);
+            services.AddOptions<FacesApiOptions>().Bind(facesApiSection);
 
             //services.AddSingleton<IProvidePostedOnDate, TodayPostedOnProvider>();
             services.AddSingleton<IProvidePostedOnDate, RandomPostedOnProvider>();
-            
+
             services.AddSingleton<IAnalyzePicture, PictureAnalyzer>();
-            
+
             services.AddSingleton<INormalizeHappinessPerDay, HappinessPerDayNormalizer>();
-            services.AddSingleton<IManageHappinessPerDayProjection, HappinessPerDayProjectionManager>();
+            services.AddSingleton<IHappinessPerDayProjectionService, HappinessPerDayProjectionService>();
+            services.AddSingleton<IHappinessPerDayProjectionClient, HappinessPerDayProjectionClient>();
         }
     }
 }

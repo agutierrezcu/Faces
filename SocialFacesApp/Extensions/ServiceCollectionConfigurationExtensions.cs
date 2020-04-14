@@ -12,7 +12,7 @@ using Microsoft.Extensions.Options;
 
 namespace SocialFacesApp.Extensions
 {
-    public static class ServiceCollectionExtensions
+    public static partial class ServiceCollectionExtensions
     {
         public static IConfigurationRoot AddConfiguration(this IServiceCollection services, Assembly assembly)
         {

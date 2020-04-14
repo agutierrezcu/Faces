@@ -4,8 +4,8 @@ using Microsoft.Azure.Documents;
 
 namespace SocialFacesApp.Services.Contracts
 {
-    public interface IManageHappinessPerDayProjection
+    public interface IHappinessPerDayProjectionService
     {
-        Task UpdateAsync(IReadOnlyList<Document> changedFaces, IDocumentClient documentClient);
+        Task UpdateAsync(IReadOnlyList<Document> changedFaces);
     }
 }

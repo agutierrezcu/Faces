@@ -49,7 +49,7 @@ namespace SocialNetworkApp.Pages
             if (!ModelState.IsValid)
             {
                 await FetchHappinessPerDayViewModel();
-                return RedirectToPage();
+                return Page();
             }
 
             try
@@ -64,6 +64,7 @@ namespace SocialNetworkApp.Pages
             return RedirectToPage();
         }
 
+        // TODO: Create interface/impl pair to be registered and injected
         private async Task FetchHappinessPerDayViewModel()
         {
             using var httpClient = new HttpClient();

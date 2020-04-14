@@ -5,63 +5,54 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.Documents.Linq;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using SocialFacesApp.Models;
+using SocialFacesApp.Persistence.Contracts;
 using SocialFacesApp.Services.Contracts;
 
 namespace SocialFacesApp.Services
 {
-    public class HappinessPerDayProjectionManager : IManageHappinessPerDayProjection
+    public class HappinessPerDayProjectionService : IHappinessPerDayProjectionService
     {
-        private static readonly Uri HappinessPerDayUri =
-            UriFactory.CreateDocumentCollectionUri("SocialNetwork", "happinessPerDay");
-
-        private static readonly RequestOptions CreateDocumentOptions = new RequestOptions
-        {
-            JsonSerializerSettings = new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver()
-            }
-        };
-
         private readonly INormalizeHappinessPerDay _happinessPerDayNormalizer;
 
-        public HappinessPerDayProjectionManager(INormalizeHappinessPerDay happinessPerDayNormalizer)
+        private readonly IHappinessPerDayProjectionClient _projectionClient;
+
+        public HappinessPerDayProjectionService(INormalizeHappinessPerDay happinessPerDayNormalizer,
+            IHappinessPerDayProjectionClient projectionClient)
         {
             _happinessPerDayNormalizer = happinessPerDayNormalizer;
+            _projectionClient = projectionClient;
         }
 
-        public async Task UpdateAsync(IReadOnlyList<Document> changedFaces, IDocumentClient documentClient)
+        public async Task UpdateAsync(IReadOnlyList<Document> changedFaces)
         {
             var normalizedResults = _happinessPerDayNormalizer.Perform(changedFaces);
 
             foreach (var normalizedResult in normalizedResults)
             {
                 var happinessPerDayProjection = await GetHappinessPerDayProjectionByDay(
-                    normalizedResult.PostedOn, documentClient);
+                    normalizedResult.PostedOn);
 
                 if (happinessPerDayProjection == null)
                 {
-                    await documentClient.CreateDocumentAsync(HappinessPerDayUri, normalizedResult, CreateDocumentOptions);
+                    await _projectionClient.CreateDocumentAsync(normalizedResult);
                 }
                 else
                 {
                     happinessPerDayProjection.UpdateHappinessInfo(normalizedResult);
-                    await documentClient.UpsertDocumentAsync(HappinessPerDayUri, happinessPerDayProjection, CreateDocumentOptions);
+                    await _projectionClient.UpsertDocumentAsync(happinessPerDayProjection);
                 }
             }
         }
 
-        private async Task<HappinessPerDayProjection> GetHappinessPerDayProjectionByDay(DateTime postedOn,
-            IDocumentClient documentClient)
+        private async Task<HappinessPerDayProjection> GetHappinessPerDayProjectionByDay(DateTime postedOn)
         {
             var feedOptions = new FeedOptions
             {
                 MaxItemCount = 1
             };
             var feedResponse = await
-                documentClient.CreateDocumentQuery<HappinessPerDayProjection>(HappinessPerDayUri, feedOptions)
+                _projectionClient.CreateDocumentQuery<HappinessPerDayProjection>(feedOptions)
                     .Where(p => p.PostedOn == postedOn)
                     .Take(1)
                     .AsDocumentQuery()

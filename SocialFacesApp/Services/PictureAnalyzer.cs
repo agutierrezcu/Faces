@@ -20,7 +20,8 @@ namespace SocialFacesApp.Services
 
         public async Task<string> ProcessAsync(Stream picture)
         {
-            var client = new FaceClient(new ApiKeyServiceClientCredentials(_facesApiOptions.Key))
+            var apiKeyServiceClientCredentials = new ApiKeyServiceClientCredentials(_facesApiOptions.Key);
+            var client = new FaceClient(apiKeyServiceClientCredentials)
             {
                 Endpoint = _facesApiOptions.Endpoint
             };
